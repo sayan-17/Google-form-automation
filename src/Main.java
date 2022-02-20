@@ -2,28 +2,44 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import sun.net.www.ApplicationLaunchException;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 public class Main {
 	
-	private final String[] places = {"Noida, Uttar Pradesh", "Meerut, Uttar Pradesh", "Rajgir, Bihar", "Ludhiana, Punjab", "Amritsar, Punjab",
-								"Pune, Maharashtra", "Hyderabad, Andhra Pradesh", "Kolkata, West Bengal", "Lucknow, Uttar Pradesh",
-								"Allahabad, Uttar Pradesh",
-								"Indore, Madhya Pradesh", "Bhopal, Madhya Pradesh", "Bangalore, Telangana", "Patna, Bihar", "Ranchi, Jharkhand"};
+	private static String[] formLinks = {
+			"https://docs.google.com/forms/d/e/1FAIpQLSdDXLulaBbzr0gZk-CoWlmi-n8duRKr-Izo27L1-8QhP1U0fg/viewform?usp=sf_link"
+	};
 	
-	private String getRandomPlace(){
-		Random random = new Random();
-		int index = random.nextInt(places.length-1);
-		return places[index];
+	private static String[] filePath = {
+			"C:\\Users\\sayan\\Desktop\\Projects\\Java\\FillForm\\sample.txt",
+	};
+	
+	private List<String> getTexts(String pathOfFile) throws FileNotFoundException {
+		File file = new File(pathOfFile);
+		Scanner sc = new Scanner(file);
+		List<String> texts = new ArrayList<>();
+		while (sc.hasNextLine()){
+			texts.add(sc.nextLine());
+		}
+		return texts;
 	}
 	
-	public void fillForm(String url, int flag) throws InterruptedException {
+	private String getRandomText(String path) throws FileNotFoundException {
+		Random random = new Random();
+		List<String > texts = getTexts(path);
+		int index = random.nextInt(texts.size()-1);
+		return texts.get(index);
+	}
+	
+	public void fillForm(String url, String path) throws InterruptedException, FileNotFoundException {
 		
-		System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Selenium-jar-files\\Web drivers\\chromedriver.exe");
+		System.setProperty("webdriver.chrome.driver", "C:\\Users\\sayan\\Downloads\\chromedriver_win32 (2)\\chromedriver.exe");
 		WebDriver driver = new ChromeDriver();
 		
 		boolean isFormFilled = false;
@@ -31,60 +47,46 @@ public class Main {
 		driver.get(url);
 		
 		int page = 1;
-		
+
 		while (true) {
-			
+
 			if(isFormFilled)
 				break;
-		
+
 			List<WebElement> sections = driver.findElements(By.className("freebirdFormviewerViewNumberedItemContainer"));
-			
+
 			for (WebElement section : sections) {
-				
+
 				List<WebElement> radioButtons = section.findElements(By.className("docssharedWizToggleLabeledLabelWrapper"));
 				List<WebElement> textAreas = section.findElements(By.className("quantumWizTextinputPaperinputInput"));
-				
+
 				if (radioButtons.size() != 0) {
-					
+
 					Random random = new Random();
-					int index = random.nextInt(radioButtons.size());;
-					
-					if(page == 1 && sections.get(0).equals(section)){
-						index = random.nextInt(radioButtons.size()) + 1;
-					} else if (page == 1 && sections.get(1).equals(section)){
-						index = random.nextInt(radioButtons.size() - 1);
-					} else if (page == 2){
-						index = (flag < 7)? 0: 1;
-					}
-					
+					int index = random.nextInt(radioButtons.size());
+					System.out.println(radioButtons.size() + " : " + index);
 					radioButtons.get(index).click();
 					System.out.println("Page : " + page + "Index : " + index + ", " + radioButtons.get(index).getText());
-//					Thread.sleep(1000);
 				}
 				if (textAreas.size() != 0) {
-					if(page == 7)
-						break;
 					for (WebElement textArea : textAreas) {
-						textArea.sendKeys(getRandomPlace());
+						textArea.sendKeys(getRandomText(path));
 					}
 				}
 			}
 			WebElement buttonDiv = driver.findElement(By.className("freebirdFormviewerViewNavigationLeftButtons"));
-			
 			List<WebElement> buttons = buttonDiv.findElements(By.className("appsMaterialWizButtonPaperbuttonContent"));
-			
+
 			for (WebElement button : buttons) {
 				if (button.getText().equals("Next")) {
-					
+
 					button.click();
 					++page;
-					
+
 				} else if (button.getText().equals("Submit")) {
-					
 					button.click();
 					isFormFilled = true;
 					driver.close();
-					
 				}
 			}
 		}
@@ -93,13 +95,11 @@ public class Main {
 	
 	public static void main(String[] args) {
 		Main main = new Main();
-		for (int i = 0; i < 10;) {
+		for (int i = 0; i < 10; ++i) {
 			try {
-				main.fillForm("https://forms.gle/jxcou82LrAR4ozFc9", i);
-				i++;
-				Thread.sleep(30*1000);
+				main.fillForm(formLinks[0], filePath[0]);
 			} catch (Exception e) {
-				System.out.println(e);
+				e.printStackTrace();
 			}
 		}
 	}
